@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: teste_receitas_rg_sistemas
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: userpass
+    ports:
+      - "3321:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    networks:
+      - recipe_app_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile # <--- Aponta para o Dockerfile "normal"
+    container_name: recipe_app_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      DATABASE_USERNAME: app_user
+      DATABASE_PASSWORD: userpass
+      DATABASE_NAME: teste_receitas_rg_sistemas
+      JWT_SECRET: sua_chave_secreta_aqui
+      NODE_ENV: development
+    volumes:
+      # Monta o código-fonte do backend no contêiner para live-reloading
+      - ./backend/src:/app/src
+      - ./backend/tsconfig.json:/app/tsconfig.json
+      - ./backend/package.json:/app/package.json
+      # Volume anônimo para node_modules, para que a instalação do Dockerfile seja usada
+      - /app/node_modules
+    # Sobrescreve o CMD do Dockerfile para rodar o script de desenvolvimento (com nodemon)
+    command: npm run dev
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - recipe_app_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev # <--- Aponta para o Dockerfile "normal"
+    container_name: recipe_app_frontend
+    restart: always
+    ports:
+      - "8080:8080" # A porta padrão do servidor de desenvolvimento do Vue
+    environment:
+      VUE_APP_API_URL: http://localhost:3000/api
+    volumes:
+      # Monta todo o diretório do frontend no contêiner para live-reloading
+      - ./frontend:/app
+      # Volume anônimo para node_modules
+      - /app/node_modules
+    # Sobrescreve o CMD do Dockerfile para rodar o script de desenvolvimento do Vue
+    command: npm run serve
+    depends_on:
+      - backend
+    networks:
+      - recipe_app_network
+
+networks:
+  recipe_app_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
