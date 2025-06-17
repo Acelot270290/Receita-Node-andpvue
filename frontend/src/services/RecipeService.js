@@ -24,5 +24,9 @@ export default {
   // DELETE /api/receitas/:id
   deleteRecipe(id) {
     return api.delete(`/receitas/${id}`);
+  },
+
+   getCount() {
+    return api.get('/receitas/count');
   }
 };

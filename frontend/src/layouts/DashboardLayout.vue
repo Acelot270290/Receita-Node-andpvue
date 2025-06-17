@@ -15,10 +15,6 @@
           <i class="icon-recipes"></i>
           <span>Minhas Receitas</span>
         </router-link>
-        <router-link to="/profile" class="nav-link">
-          <i class="icon-user"></i>
-          <span>Meu Perfil</span>
-        </router-link>
       </nav>
       <div class="sidebar-footer">
         <button @click="logout" class="logout-btn">
