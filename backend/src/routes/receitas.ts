@@ -254,9 +254,9 @@ router.put('/:id', checkJwt, async (req: AuthenticatedRequest, res) => {
   const recipeRepository = AppDataSource.getRepository(Recipe);
 
   try {
-    const recipe = await recipeRepository.findOneBy({
-      id: recipeId,
-      user: { id: userId },
+    const recipe = await recipeRepository.findOne({
+      where: { id: recipeId, user: { id: userId } },
+      relations: ['category'],
     });
 
     if (!recipe) {
@@ -270,7 +270,14 @@ router.put('/:id', checkJwt, async (req: AuthenticatedRequest, res) => {
     }
 
     recipeRepository.merge(recipe, dataToUpdate);
+
+    // 👇 Atualiza o relacionamento com a nova categoria, se enviada
+    if (dataToUpdate.categoriaId) {
+      recipe.category = { id: dataToUpdate.categoriaId } as any;
+    }
+
     const updatedRecipe = await recipeRepository.save(recipe);
+
     const responseRecipe = {
       ...updatedRecipe,
       ingredientes: JSON.parse(updatedRecipe.ingredientes),
@@ -284,6 +291,7 @@ router.put('/:id', checkJwt, async (req: AuthenticatedRequest, res) => {
     });
   }
 });
+
 
 // =================================================================
 // 5. DELETE (DELETE /:id)
