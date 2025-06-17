@@ -26,6 +26,7 @@ docker-compose up --build
 
 A aplicação será exposta em: [http://localhost:3000](http://localhost:3000)  
 Swagger disponível em: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+Vue disponível em: [http://localhost:8080](http://localhost:8080)
 
 ---
 
